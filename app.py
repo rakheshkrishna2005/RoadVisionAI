@@ -8,33 +8,29 @@ from PIL import Image
 st.set_page_config(layout="centered", page_title="Road Defect Detection")
 
 st.markdown(
-    "<h1 style='text-align: center;'>AI-Driven Road Quality Monitoring and Defect Detection System​</h1>",
+    "<h1 style='text-align: center;'>RoadVision AI​</h1>",
     unsafe_allow_html=True
 )
 
+uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg", "mp4", "mov", "avi"])
+
 model = YOLO("best.pt")
 
-st.sidebar.title("Upload")
+if uploaded_file:
+    file_type = uploaded_file.type
 
-option = st.sidebar.radio("Choose input type", ("Image", "Video"))
-
-if option == "Image":
-    uploaded_image = st.sidebar.file_uploader("Upload an Image", type=["png", "jpg", "jpeg"])
-    if uploaded_image:
-        image = Image.open(uploaded_image)
-        st.image(image, caption="Uploaded Image", use_column_width=True)
+    if file_type.startswith("image"):
+        image = Image.open(uploaded_file)
         results = model.predict(image)
         annotated = results[0].plot()
-        st.image(annotated, caption="Detected Image", use_column_width=True)
+        st.image(annotated, channels="BGR", use_container_width=True)
 
-elif option == "Video":
-    uploaded_video = st.sidebar.file_uploader("Upload a Video", type=["mp4", "mov", "avi"])
-    if uploaded_video:
+    elif file_type.startswith("video"):
         tfile = tempfile.NamedTemporaryFile(delete=False)
-        tfile.write(uploaded_video.read())
+        tfile.write(uploaded_file.read())
         cap = cv2.VideoCapture(tfile.name)
-
         stframe = st.empty()
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -42,5 +38,5 @@ elif option == "Video":
             results = model.predict(frame)
             annotated_frame = results[0].plot()
             annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
-            stframe.image(annotated_frame, channels="RGB", use_column_width=True)
+            stframe.image(annotated_frame, channels="RGB", use_container_width=True)
         cap.release()
